@@ -7,17 +7,15 @@ dev.off()
 
 source('modelPerfFunctions.R')
 
-###
-### THIS EXAMPLE WILL DEMONSTRATE THE FOLLOWING THINGS:
-### 1. CLASSIFCATION MACHINE LEARNERS STRUGGLE WITH IMBALANCED DATASETS
-### 2. TYPICAL UNDERSAMPLING METHODS PRODUCES UNCALIBRATED PROBABILITIES
-### 3. POSSBILE SOLUTIONS AND HOW TO MEASURE EFFECTIVENESS
-###
-
+##############################################################################
+### THIS EXAMPLE WILL DEMONSTRATE THE FOLLOWING THINGS: ######################
+### 1. CLASSIFCATION MACHINE LEARNERS STRUGGLE WITH IMBALANCED DATASETS ######
+### 2. TYPICAL UNDERSAMPLING METHODS PRODUCES UNCALIBRATED PROBABILITIES #####
+### 3. POSSBILE SOLUTIONS AND HOW TO MEASURE EFFECTIVENES ####################
+##############################################################################
 
 library(ranger)
 library(caret)
-library(ModelMetrics)
 library(knitr)
 library(lattice)
 
@@ -100,6 +98,9 @@ rfFit <- ranger(resp~ .,
 
 # Get prediction on test data
 rfProbs= predict(rfFit, data = testDat)$predictions
+
+# Note that the AUC is a measure of how well the model ranks predictions
+# Thus it is possible to have uncalibrated probabilities but still have a good AUC score
 # Get model performance on test set
 roc(testDat$resp, rfProbs[,2],
     smoothed = TRUE,
@@ -117,10 +118,13 @@ calibrationPlot(dataFrame= testDat,
 
 # The calibration plot demonstrates that the posterior probabilities are too high
 
+# Using Bayes Minimum Risk theory the correct classification threshold is found adjusted after undersampling.
 # Using equation 4 from Dal Pozzolo Calibrating Probability with Undersampling for Unbalanced Classification
 #system2('open', args = 'dalpozzolo2015calibrating.pdf', wait = FALSE)
 
+# Calcuate required sampling beta
 beta= nrow(negResponsesUnder)/ nrow(negResponsesOrg)
+# Create calibrated probabilities
 predsCal= beta * rfProbs[,2] / ((beta-1) * rfProbs[,2] + 1)
 
 rfProbs= cbind(rfProbs, predsCal)
@@ -139,3 +143,5 @@ calibrationPlot(dataFrame= testDat,
                 respLabel= '1', 
                 predictions= rfProbs[,3], 
                 percentilesNo= 10)
+
+
