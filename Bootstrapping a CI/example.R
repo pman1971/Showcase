@@ -105,7 +105,7 @@ abline(v= bootStrapCI, col= 'red', lty= 3)
 
 # Worth noting that this process tends to produce a too narrow confidence interval  
 # The so-called bias-corrected and accelerated bootstrap interval (the BCa interval) required
-# Good package demostrating thia
+# Use boot package to demonstrate how to correct this bias
 
 library(boot)
 
@@ -117,8 +117,8 @@ meanfun <- function(data, i){
 bo <- boot(data[, "smallSample", drop = FALSE], 
            statistic= meanfun, R= bootStrapNo)
 bootStrapCI= boot.ci(bo, conf= 0.95, type= "bca")
-bootStrapCIBCA= bootStrapCIBCA$bca[c(4,5)]
+bootStrapCI_BCA= bootStrapCI$bca[c(4,5)]
 
 # Add BCA corrected line noting that it is wider
-abline(v= bootStrapCIBCA, col= 'blue', lty= 3)
+abline(v= bootStrapCI_BCA, col= 'blue', lty= 3)
 
