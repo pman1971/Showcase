@@ -74,6 +74,7 @@ for(i in 1:sims)
 
 # Take small sample
 
+set.seed(222)
 smallSampleSize= 10
 smallSample= sample(popVals, size= smallSampleSize, replace = F)
 
@@ -83,7 +84,7 @@ meanPE= mean(smallSample)
 # Get standard error which is based on standard deviation of the draw sample
 SE= sd(smallSample)/sqrt(sampleSize)
 
-# Bootsrapping is where you resample with replacement many times
+# Bootstrapping is where you resample with replacement many times
 
 # Bootstrap samples
 bootStrapNo = 10000
@@ -93,4 +94,31 @@ bootStrapSamples= sample(smallSample, size= bootStrapNo * smallSampleSize, repla
 # Populate matrix
 bootStrapMatrix= matrix(bootStrapSamples, nrow= bootStrapNo, byrow= TRUE)
 
+bootStrapSamplesMeans= rowMeans(bootStrapMatrix)
+bootStrapMean= mean(bootStrapSamplesMeans)
+hist(bootStrapSamplesMeans, 
+     main= paste('Bootstrapping distribution with mean', round(bootStrapMean, 2)))
+bootStrapCI= quantile(bootStrapSamplesMeans, c(0.05, 0.95))
+
+# Add CI based on 95 percentile of bootstrapping distribution
+abline(v= bootStrapCI, col= 'red', lty= 3)
+
+# Worth noting that this process tends to produce a too narrow confidence interval  
+# The so-called bias-corrected and accelerated bootstrap interval (the BCa interval) required
+# Good package demostrating thia
+
+library(boot)
+
+data <- data.frame(smallSample)
+meanfun <- function(data, i){
+  d <- data[i, ]
+  return(mean(d))   
+}
+bo <- boot(data[, "smallSample", drop = FALSE], 
+           statistic= meanfun, R= bootStrapNo)
+bootStrapCI= boot.ci(bo, conf= 0.95, type= "bca")
+bootStrapCIBCA= bootStrapCIBCA$bca[c(4,5)]
+
+# Add BCA corrected line noting that it is wider
+abline(v= bootStrapCIBCA, col= 'blue', lty= 3)
 
