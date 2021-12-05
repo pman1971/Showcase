@@ -14,6 +14,9 @@ library(lubridate)
 library(hrbrthemes)
 library(gganimate)
 
+
+# PRODUCE ANIMATION OF TEAMS LADDER POSITION FOR THE WHOLE SEASON
+
 # Create a list for all rounds results
 
 # Number of rounds to analyse
@@ -53,8 +56,19 @@ for(roundNo in 1:roundNoTotal)
   clubLadderList[[roundNo]]= clubLadderDF
 }
 
+setwd("~/Documents/Showcase/NRL stats")
+#saveRDS(clubLadderList, 'clubLadderList.rds')
+
 # Bind list of dataframes into one large dataframe
-clubLadderListDF= as.data.frame(rbindlist(clubLadderList))
+if(length(clubLadderList)>0)
+{
+  clubLadderListDF= as.data.frame(rbindlist(clubLadderList))
+} else
+{
+  # If NRL site has removed webpages load previously created data
+  clubLadderList= readRDS('clubLadderList.rds')
+  clubLadderListDF= as.data.frame(rbindlist(clubLadderList))
+}
 
 # Create proper team names
 clubsUnique= unique(clubLadderListDF$Club)
@@ -133,29 +147,84 @@ animacion=
 # Duration was set to 20 secs after trying different values
 animate(animacion, width = 700, height = 432, fps = 25, duration = 20, rewind = FALSE)
 
-
 # Once plot has rendered save the file by right clicking on the GIF
 
-# Different plot with labels moving with team lines
-animacion2= 
-  ggplot(clubLadderListDF, aes(x=Round, y=Position, group= Team, color=Team)) + 
-  geom_line() + 
-  geom_segment(aes(xend = 24, yend = Position), linetype = 2, colour = 'grey') + 
-  geom_point(size = 2) + 
-  scale_color_manual(values= cols) +
-  geom_text(aes(x = 24, label = Team), hjust = 0) + 
-  geom_line(data = subset(clubLadderListDF, Team == 'Sea Eagles'), 
-            size = 1, color = '#6f163d') +
-  transition_reveal(Round) + 
-  coord_cartesian(clip = 'off') + 
-  labs(title = 'NRL ladder', y = 'Position') + 
-  theme_minimal() + 
-  scale_y_reverse() +
-  theme(legend.position = "none") +
-  theme(plot.margin = margin(5.5, 40, 5.5, 5.5))
+# PERFORM PCA ANALYSIS ON EACH TEAMS STATS
 
-animate(animacion2, width = 700, height = 432, fps = 25, duration = 20, rewind = FALSE)
+### CLEAN WORKSPACE AND SOURCE FUNCTIONS ####
+# Clear all objects
+rm(list=ls())
 
-animate(animacion2, width = 700, height = 432, fps = 12, duration = 20, rewind = FALSE)
+# Clear all plots
+dev.off()
 
+# Library packages
+library(tidyverse)  
+library(data.table)
+library(rvest)    
+library(stringr)   
+library(lubridate)
+library(factoextra)
+library(fpc)
+library(useful)
 
+# Read page with total summary stats
+urlPage= "https://www.foxsports.com.au/nrl/nrl-premiership/stats/teams"
+
+# Read webpage
+webPage= read_html(urlPage)
+tables= webPage %>% html_table()
+
+# Foxsports dynamically adds beting information so structure always changes
+# Identify table with 16 records representing all the NRL teams
+nrlTeamNo= 16
+summaryTeamTotal= tables[[which(sapply(tables, nrow)== nrlTeamNo)]]
+
+setwd("~/Documents/Showcase/NRL stats")
+# saveRDS(summaryTeamTotal, 'summaryTeamTotal.rds')
+# summaryTeamTotal= readRDS('summaryTeamTotal.rds')
+
+# Prepare data
+teamName= gsub('[[:digit:]]+', '', summaryTeamTotal$Name)
+teamName= paste0(1:16, '.', teamName)
+
+# Prepare data for PCA- matrix with row names
+mydata = summaryTeamTotal[,2:ncol(summaryTeamTotal)]
+
+# Remove field goals
+mydata$`FG%`= NULL
+
+# Source metrics file which stores the legends for each NRL metric
+source('metrics.R')
+
+names(mydata)= metric
+
+# Get rid of commas
+mydata= 
+  mydata %>%
+  map_df(str_replace, pattern = ",", replacement = "") %>%
+  map_df(as.numeric)
+
+# Put team names into dataframe row for PCA
+row.names(mydata) = teamName
+
+# Standardize data so that no variable dominates
+mydata <- scale(mydata)
+
+# PCA
+res.pca <- prcomp(mydata, scale = TRUE)
+fviz_eig(res.pca)
+
+plot1= fviz_pca_biplot(res.pca, alpha.var="contrib",
+                       pointsize = "cos2",
+                       col.var= as.factor(legendDF$statType))
+plot1$labels$size= 'Importance'
+plot1$labels$colour= 'Metric'
+plot1$labels$alpha= 'Contribution'
+
+# Return PCA plot by team and metrics
+plot1
+
+# Note that teams together are more alike
+
+# Note Panthers who excel at Kicking Game and Kick Return used this in Grand Final to beath Rabbitohs
