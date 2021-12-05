@@ -56,6 +56,7 @@ partition.data(seed= 123, split= 0.5, resp= depend.var)
 review.splits()
 
 ### TRAIN MODELS ####
+### Possible to optimize on 9 model performance metrics
 ### Accuracy + Kappa ###
 ### ROC + Sens + Spec ###
 ### AUC (Precision-Recall AUC) + Precision + Recall + F ###
