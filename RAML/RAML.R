@@ -12,6 +12,8 @@ source("RAMLFunctions.R")
 library.packages()
 
 ### LOAD DATA ####
+
+# Amend code to load data
 mydat = read.table("http://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data")
 colnames(mydat) = c("chk_acct", "duration", "credit_his", "purpose", 
                             "amount", "saving_acct", "present_emp", "installment_rate", "sex", "other_debtor", 
@@ -35,7 +37,7 @@ mydat %>%
   mutate(proportion = round(n / sum(n), 3)) %>% 
   kable()
 
-# O is bad credit
+# 2 is bad credit
 depend.var<- as.factor(ifelse(mydat$resp== 2, "Pos", "Neg"))
 levels(depend.var)
 depend.var<- factor(depend.var, levels=c("Pos", "Neg"), ordered= TRUE)
@@ -60,6 +62,11 @@ review.splits()
 ### Accuracy + Kappa ###
 ### ROC + Sens + Spec ###
 ### AUC (Precision-Recall AUC) + Precision + Recall + F ###
+
+# Function below fits 5 models and performs cross-validation in parallel
+# Each of the resampled data sets is independent of the others, so there is 
+# no formal requirement that the models must be run sequentially. 
+
 train.models(seed= 123,          
              model.hyp.par= 5,   
              folds= 10,          
