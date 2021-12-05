@@ -9,6 +9,8 @@ library.packages<- function()
   library(doParallel)
 }
 
+# TODO: REFACTOR CODE TO RETURN OBJECTS INTO LISTS
+
 dummify.data<- function()
 {
   mydatDummy<- dummyVars("~.", data= mydat, fullRank= TRUE)
