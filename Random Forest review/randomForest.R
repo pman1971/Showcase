@@ -101,10 +101,10 @@ predProb= predict(rf, test, type = "prob")
 # Return number of trees that vote for Pos
 predVotes= as.data.frame(predict(rf, test, type = "vote", norm.votes = F))
 
-# Divide by total no of trees
+# Divide no of tress class votes by total no of trees 
 predProbVote= predVotes$Pos/treeNo
 
-# Compare preds
+# Comparing preds yield identical match
 identical(as.vector(predProb[,1]), predProbVote)
 
 
