@@ -80,4 +80,23 @@ plot(test.ROC.results~ trees.list, type= "b",
 # Add line denoting maximum AUC across all trees
 abline(h= max(test.ROC.results), col= "red")
 
+# Demonstrate how RF calculate probabilities
+
+# Fit RF with 100 trees
+
+library(randomForest)
+
+treeNo= 100
+rf = randomForest(resp~., data = train, norm.votes = TRUE, proximity = TRUE,
+                  ntree= treeNo)
+predProb= predict(rf, test, type = "prob")
+
+# Return number of trees that vote for Pos
+predVotes= as.data.frame(predict(rf, test, type = "vote", norm.votes = F))
+
+# Divide by total no of trees
+predProbVote= predVotes$Pos/treeNo
+
+# Compare preda
+identical(as.vector(predProb[,1]), predProbVote)
 
